@@ -1,0 +1,590 @@
+/* =============================================================
+   1. FONT FACE
+   =============================================================
+   WHAT: Load the Karla variable font from local files
+   WHY:  Variable fonts contain all weights in one file (smaller total size).
+         font-weight: 400 700 declares the range we use (normal & bold).
+         font-display: swap shows fallback text immediately, then swaps
+         to Karla once loaded — prevents invisible text (FOIT). */
+@font-face {
+  font-family: "Karla";
+  src: url("./assets/fonts/Karla-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =============================================================
+   2. VARIABLES / DESIGN TOKENS
+   =============================================================
+   WHAT: All colors, fonts, spacing, and breakpoints as SCSS variables
+   WHY:  Single source of truth — change a color once, it updates everywhere.
+         Naming matches the style guide (green-200, grey-900, etc.)
+         for easy reference back to the design specs. */
+
+// -- Colors (from style-guide.md) --
+$green-200: hsl(148, 38%, 91%);  // Light mint — page background, selected radio bg
+$green-600: hsl(169, 82%, 27%);  // Dark teal — focus borders, button, checkbox fill
+$red-500: hsl(0, 66%, 54%);     // Error text and invalid borders
+$white: hsl(0, 0%, 100%);       // Card background, button text
+$grey-500: hsl(186, 15%, 59%);  // Default input borders
+$grey-900: hsl(187, 24%, 22%);  // Body text, toast background
+
+// -- Typography --
+$font-family: "Karla", system-ui, sans-serif; // Fallback chain for if font fails to load
+
+// -- Spacing scale (rem-based for accessibility — respects user font-size prefs) --
+$space-1: 0.5rem;   // 8px — small gaps (label to input, error margin)
+$space-2: 0.75rem;  // 12px — icon gaps
+$space-3: 1rem;     // 16px — grid gaps, form row spacing
+$space-4: 1.5rem;   // 24px — card padding mobile, section spacing
+$space-5: 2rem;     // 32px
+$space-6: 2.5rem;   // 40px — card padding desktop
+
+// -- Border radius --
+$radius-sm: 0.5rem;    // 8px — inputs, buttons
+$radius-md: 0.9375rem; // 15px — card container
+
+// -- Breakpoint --
+// WHY: 48rem = 768px. Using rem so it respects user's font-size setting.
+//      Mobile-first: styles below this are mobile, @media above this is desktop.
+$bp-desktop: 48rem;
+
+/* =============================================================
+   3. MIXINS
+   =============================================================
+   WHAT: Reusable style patterns we use in multiple places
+   WHY:  DRY principle — write once, @include everywhere */
+
+// WHAT: Custom focus ring for keyboard navigation visibility
+// WHY:  :focus-visible only triggers on keyboard focus (not mouse clicks).
+//       The ring must be clearly visible (WCAG 2.4.7 — Focus Visible).
+//       We use outline (not border) so it doesn't shift layout.
+@mixin focus-ring {
+  outline: 3px solid rgba($green-600, 0.4);
+  outline-offset: 2px;
+}
+
+// WHAT: Visually hides an element but keeps it accessible to screen readers
+// WHY:  display:none removes elements from the accessibility tree entirely.
+//       This technique keeps the element focusable and readable by screen readers
+//       while making it invisible. Used for native radio/checkbox inputs and .sr-only.
+//       This is the standard "visually hidden" pattern recommended by WebAIM.
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// WHAT: Media query shorthand for min-width breakpoints
+// WHY:  Mobile-first approach — base styles are mobile, this adds desktop overrides.
+//       @content passes the enclosed styles into the media query.
+@mixin mq($width) {
+  @media (min-width: $width) {
+    @content;
+  }
+}
+
+/* =============================================================
+   4. RESET / BASE
+   =============================================================
+   WHAT: Normalize browser defaults for consistent cross-browser rendering
+   WHY:  Each browser has different default margins, box-sizing, fonts.
+         This gives us a clean, predictable starting point. */
+
+// WHAT: Universal box-sizing reset
+// WHY:  border-box includes padding and border IN the element's width.
+//       Without this, a 100%-width input with padding would overflow its container.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// WHAT: Base font size on html
+// WHY:  100% = user's preferred size (usually 16px).
+//       We NEVER set a px font-size on html because that overrides
+//       user accessibility settings (people who set larger text). 
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;                    // Remove default body margin
+  min-height: 100svh;           // Full viewport height (svh = small viewport height, handles mobile address bar)
+  font-family: $font-family;
+  font-size: 1rem;              // 16px at default — matches style guide label size
+  color: $grey-900;
+  background-color: $green-200;
+  line-height: 1.5;             // 1.5 line-height is WCAG minimum for readability (1.4.12)
+}
+
+// WHAT: Remove default fieldset styling
+// WHY:  Browser defaults add borders, padding, and margins to fieldsets.
+//       We want to style it our own way while keeping the semantic benefit.
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+// WHAT: Style the legend like our other labels
+// WHY:  Legends render oddly by default (floating in the fieldset border).
+//       We reset it to behave like a block element matching our label styles.
+legend {
+  padding: 0;
+}
+
+/* =============================================================
+   5. UTILITIES
+   =============================================================
+   WHAT: Small, single-purpose helper classes */
+
+// WHAT: Screen-reader-only class
+// WHY:  Used for text that should be read by screen readers but not shown visually.
+//       Example: "required" text next to asterisks — sighted users see *,
+//       screen reader users hear "required".
+.sr-only {
+  @include visually-hidden;
+}
+
+/* =============================================================
+   6. LAYOUT
+   =============================================================
+   WHAT: Page-level and card container layout styles */
+
+// WHAT: Page wrapper — centers the card vertically and horizontally
+// WHY:  CSS Grid with place-items: center is the simplest centering technique.
+//       Padding ensures the card doesn't touch screen edges on mobile.
+.page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: $space-4 $space-3;
+}
+
+// WHAT: White card container for the form
+// WHY:  min() makes it responsive — 100% on small screens, capped at 46rem on large.
+//       This avoids needing a separate max-width + width: 100% combo.
+.card {
+  width: min(100%, 46rem);
+  background-color: $white;
+  border-radius: $radius-md;
+  padding: $space-4;
+
+  // WHAT: Increase padding on desktop
+  // WHY:  More whitespace at larger sizes matches the design's spacious desktop layout.
+  @include mq($bp-desktop) {
+    padding: $space-6;
+  }
+}
+
+// WHAT: Form heading
+// WHY:  Bold, dark text. Letter-spacing of -1px tightens the heading
+//       to match the design's compact heading style.
+h1 {
+  margin: 0 0 $space-4;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.0625rem;
+  color: $grey-900;
+}
+
+/* =============================================================
+   7. FORM COMPONENTS
+   =============================================================
+   WHAT: All form-related styles — fields, inputs, choices, button */
+
+// -- Form Layout --
+
+// WHAT: Vertical spacing between form sections
+// WHY:  gap creates consistent spacing without margin collapsing issues.
+//       Flexbox column ensures items stack vertically.
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+// WHAT: Grid container for multi-column layouts
+// WHY:  On mobile, it's a single column (default grid).
+//       The --two modifier makes it 2 columns on desktop.
+.form__grid {
+  display: grid;
+  gap: $space-3;
+
+  // WHAT: Two-column variant for name fields and query type
+  // WHY:  Only activate 2 columns at desktop breakpoint.
+  //       On mobile, they remain stacked (1 column) for usability.
+  &--two {
+    @include mq($bp-desktop) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+
+// -- Individual Field Container --
+
+// WHAT: Wrapper for each label + input + error group
+// WHY:  Flexbox column keeps the three elements stacked with consistent spacing.
+.field {
+  display: flex;
+  flex-direction: column;
+
+  // WHAT: Fieldset variant for radio group
+  // WHY:  When the field IS a fieldset, we need the same flex layout
+  //       and gap between the legend and the radio options.
+  &--group {
+    gap: $space-3;
+  }
+}
+
+// -- Labels --
+
+// WHAT: Form field labels
+// WHY:  Small bottom margin separates the label from its input.
+//       font-size matches the style guide (16px = 1rem).
+.field__label {
+  display: block;
+  margin-bottom: $space-1;
+  font-size: 1rem;
+  font-weight: 400;
+  color: $grey-900;
+
+  // WHAT: Green asterisk for required fields
+  // WHY:  Visual indicator that a field is required.
+  //       aria-hidden="true" on this span prevents screen readers
+  //       from announcing "star" (they already hear "required").
+  span[aria-hidden="true"] {
+    color: $green-600;
+  }
+}
+
+// -- Text Inputs & Textarea --
+
+// WHAT: Shared styles for all text-type inputs and textarea
+// WHY:  Consistent appearance, properly sized touch targets (min 44px height
+//       from padding), and inherited font so textarea matches inputs.
+.field__input {
+  width: 100%;
+  border: 1px solid $grey-500;
+  border-radius: $radius-sm;
+  padding: 0.75rem $space-3;
+  font: inherit;              // WHY: textarea doesn't inherit font by default in some browsers
+  font-size: 1.125rem;
+  color: $grey-900;
+  background-color: $white;
+  transition: border-color 0.2s ease;
+
+  // WHAT: Focus state — teal border + focus ring
+  // WHY:  :focus-visible only shows for keyboard navigation (not mouse clicks).
+  //       This is the accessible way to show focus — it must be clearly visible
+  //       (WCAG 2.4.7). Mouse users don't see it, keyboard users do.
+  &:focus-visible {
+    border-color: $green-600;
+    @include focus-ring;
+  }
+
+  // WHAT: Invalid state — red border when aria-invalid is set by JS
+  // WHY:  We use the aria-invalid attribute as our CSS hook.
+  //       This means the visual state and the accessibility state are always in sync.
+  //       If the border is red, screen readers also know it's invalid.
+  &[aria-invalid="true"] {
+    border-color: $red-500;
+  }
+
+  // WHAT: Textarea-specific styles
+  // WHY:  resize: vertical prevents horizontal resizing that could break layout.
+  //       min-height ensures a reasonable input area for messages.
+  &--textarea {
+    resize: vertical;
+    min-height: 6.5rem;
+  }
+}
+
+// -- Error Messages --
+
+// WHAT: Validation error text shown below inputs
+// WHY:  Red color matches the design. Small top margin separates it from the input.
+//       font-size slightly smaller than labels to establish visual hierarchy.
+//       These are linked to inputs via aria-describedby so screen readers
+//       announce them when the input is focused.
+.field__error {
+  margin: $space-1 0 0;
+  font-size: 0.875rem;
+  color: $red-500;
+  line-height: 1.4;
+}
+
+// -- Radio & Checkbox (Choice Component) --
+
+// WHAT: Container for visually-hidden input + styled label
+// WHY:  position: relative allows absolute positioning of the real input
+//       if needed for click target alignment.
+.choice {
+  position: relative;
+}
+
+// WHAT: Visually hide the native radio/checkbox input
+// WHY:  We CANNOT use display:none or visibility:hidden because that
+//       removes the input from keyboard tab order and accessibility tree.
+//       visually-hidden keeps it:
+//       1. Focusable via Tab/Arrow keys
+//       2. Announced by screen readers
+//       3. Toggleable with Space/Enter
+//       The visual styling comes from the adjacent label instead.
+.choice__input {
+  @include visually-hidden;
+}
+
+// WHAT: Styled label that acts as the visual control
+// WHY:  The "for" attribute on the label connects it to the hidden input.
+//       Clicking anywhere on this label toggles the real input.
+//       This gives us a large, design-matching touch target while
+//       keeping full accessibility of the native input.
+.choice__label {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  border: 1px solid $grey-500;
+  border-radius: $radius-sm;
+  padding: 0.75rem $space-3;
+  cursor: pointer;
+  background-color: $white;
+  font-size: 1.125rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+// WHAT: Custom visual indicator (radio circle or checkbox square)
+// WHY:  This replaces the hidden native control visually.
+//       aria-hidden="true" on the HTML prevents screen readers from
+//       trying to interact with this decorative element.
+.choice__indicator {
+  // WHAT: Default radio indicator — empty circle
+  // WHY:  Matches the design's circular radio button style.
+  //       flex-shrink: 0 prevents it from squishing on narrow screens.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid $grey-500;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+
+  // WHAT: Checkbox variant — square instead of circle
+  // WHY:  Conventional visual distinction: circles = radio, squares = checkbox.
+  &--checkbox {
+    border-radius: 0.125rem;
+  }
+}
+
+// WHAT: Focus state for custom radio/checkbox
+// WHY:  When the REAL hidden input gets keyboard focus (:focus-visible),
+//       we style the ADJACENT label (+ combinator) to show the focus ring.
+//       This is the key accessibility trick — the focus state is visible
+//       on the styled label even though the actual focused element is hidden.
+.choice__input:focus-visible + .choice__label {
+  border-color: $green-600;
+  @include focus-ring;
+}
+
+// WHAT: Checked/selected state for radio buttons
+// WHY:  When the hidden radio is :checked, the adjacent label gets:
+//       1. Teal border — indicates selection
+//       2. Light green background — matches design's selected state
+//       The indicator gets a teal border and an inner dot via the ::after pseudo-element.
+.choice__input[type="radio"]:checked + .choice__label {
+  border-color: $green-600;
+  background-color: $green-200;
+
+  .choice__indicator {
+    border-color: $green-600;
+
+    // WHAT: Inner dot for selected radio
+    // WHY:  Creates the filled circle inside the radio indicator.
+    //       Using a pseudo-element instead of an SVG keeps it CSS-only and lightweight.
+    &::after {
+      content: "";
+      display: block;
+      width: 0.625rem;
+      height: 0.625rem;
+      border-radius: 50%;
+      background-color: $green-600;
+    }
+  }
+}
+
+// WHAT: Checked state for checkbox
+// WHY:  When checked, the indicator becomes a solid teal square with
+//       a white checkmark SVG as background image — matching the design.
+.choice__input[type="checkbox"]:checked + .choice__label {
+  .choice__indicator--checkbox {
+    background-color: $green-600;
+    border-color: $green-600;
+
+    // WHAT: White checkmark via SVG background image
+    // WHY:  Inline SVG as a data URI avoids an extra HTTP request.
+    //       The checkmark is purely decorative (aria-hidden on the HTML element)
+    //       — the screen reader uses the real checkbox state instead.
+    &::after {
+      content: "";
+      display: block;
+      width: 0.75rem;
+      height: 0.75rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%23fff' d='M13.28 7.28a.748.748 0 0 1 0 0l-5.25 5.25a.748.748 0 0 1-1.06 0l-2.25-2.25a.75.75 0 1 1 1.06-1.06l1.72 1.72 4.72-4.72a.751.751 0 0 1 1.06 1.06Z'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+  }
+}
+
+// -- Submit Button --
+
+// WHAT: Full-width submit button
+// WHY:  Large touch target (padding gives >44px height for mobile accessibility).
+//       Bold white text on green background for high contrast.
+//       Inherits font-family for consistency with form inputs.
+.button {
+  width: 100%;
+  border: 0;
+  border-radius: $radius-sm;
+  padding: 1rem;
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: $white;
+  background-color: $green-600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: $space-1;
+
+  // WHAT: Keyboard focus style
+  // WHY:  Same focus ring as inputs for visual consistency.
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+/* =============================================================
+   8. INTERACTION STATES (HOVER)
+   =============================================================
+   WHAT: Hover styles wrapped in @media (hover: hover)
+   WHY:  This media query checks if the device supports hover.
+         Touch devices don't — so hover styles won't activate on tap,
+         preventing "sticky hover" bugs on mobile where styles persist
+         after tapping. Only mouse/trackpad users see hover effects. */
+@media (hover: hover) {
+  .field__input:hover {
+    border-color: $green-600;
+  }
+
+  .choice__label:hover {
+    border-color: $green-600;
+  }
+
+  // WHAT: Darker button on hover
+  // WHY:  Provides visual feedback that the button is interactive.
+  //       Using a darker shade of the same color maintains brand consistency.
+  .button:hover {
+    background-color: hsl(187, 24%, 22%);
+  }
+}
+
+/* =============================================================
+   9. SUCCESS TOAST
+   =============================================================
+   WHAT: Fixed notification bar at top of viewport
+   WHY:  position: fixed keeps it visible regardless of scroll position.
+         z-index: 1000 ensures it appears above all other content.
+         role="status" + aria-live="polite" (in HTML) makes screen readers
+         announce it when content appears. */
+.toast {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 2rem), 28rem);
+  background-color: $grey-900;
+  color: $white;
+  border-radius: $radius-md;
+  padding: $space-4;
+  z-index: 1000;
+
+  // WHAT: Fade-in animation
+  // WHY:  Smooth appearance feels polished and draws the user's eye
+  //       to the toast without being jarring.
+  animation: toast-in 0.3s ease;
+}
+
+// WHAT: Keyframe for toast slide-down + fade-in
+// WHY:  Starts slightly above its final position and transparent,
+//       then settles into place. This motion draws attention to the message.
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+// WHAT: Inner wrapper for toast content
+// WHY:  Separates layout concerns from the outer positioning.
+.toast__inner {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+// WHAT: Toast header row (icon + title)
+// WHY:  Flex row aligns the checkmark icon and "Message Sent!" side by side.
+.toast__header {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+
+  img {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+// WHAT: Toast title text
+// WHY:  Bold and slightly larger to create visual hierarchy within the toast.
+.toast__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+// WHAT: Toast body/description text
+// WHY:  Lighter color and smaller size to differentiate from the title.
+.toast__body {
+  margin: 0;
+  font-size: 0.875rem;
+  color: $green-200;
+  line-height: 1.4;
+}
+
+/* =============================================================
+   10. ATTRIBUTION (from starter template)
+   ============================================================= */
+.attribution {
+  font-size: 0.6875rem;
+  text-align: center;
+  margin-top: $space-3;
+
+  a {
+    color: hsl(228, 45%, 44%);
+  }
+}

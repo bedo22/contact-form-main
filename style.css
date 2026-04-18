@@ -1,0 +1,371 @@
+@charset "UTF-8";
+/* =============================================================
+   1. FONT FACE
+   =============================================================
+   WHAT: Load the Karla variable font from local files
+   WHY:  Variable fonts contain all weights in one file (smaller total size).
+         font-weight: 400 700 declares the range we use (normal & bold).
+         font-display: swap shows fallback text immediately, then swaps
+         to Karla once loaded — prevents invisible text (FOIT). */
+@font-face {
+  font-family: "Karla";
+  src: url("./assets/fonts/Karla-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+/* =============================================================
+   2. VARIABLES / DESIGN TOKENS
+   =============================================================
+   WHAT: All colors, fonts, spacing, and breakpoints as SCSS variables
+   WHY:  Single source of truth — change a color once, it updates everywhere.
+         Naming matches the style guide (green-200, grey-900, etc.)
+         for easy reference back to the design specs. */
+/* =============================================================
+   3. MIXINS
+   =============================================================
+   WHAT: Reusable style patterns we use in multiple places
+   WHY:  DRY principle — write once, @include everywhere */
+/* =============================================================
+   4. RESET / BASE
+   =============================================================
+   WHAT: Normalize browser defaults for consistent cross-browser rendering
+   WHY:  Each browser has different default margins, box-sizing, fonts.
+         This gives us a clean, predictable starting point. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  font-family: "Karla", system-ui, sans-serif;
+  font-size: 1rem;
+  color: hsl(187, 24%, 22%);
+  background-color: hsl(148, 38%, 91%);
+  line-height: 1.5;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+/* =============================================================
+   5. UTILITIES
+   =============================================================
+   WHAT: Small, single-purpose helper classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =============================================================
+   6. LAYOUT
+   =============================================================
+   WHAT: Page-level and card container layout styles */
+.page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1rem;
+}
+
+.card {
+  width: min(100%, 46rem);
+  background-color: hsl(0, 0%, 100%);
+  border-radius: 0.9375rem;
+  padding: 1.5rem;
+}
+@media (min-width: 48rem) {
+  .card {
+    padding: 2.5rem;
+  }
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.0625rem;
+  color: hsl(187, 24%, 22%);
+}
+
+/* =============================================================
+   7. FORM COMPONENTS
+   =============================================================
+   WHAT: All form-related styles — fields, inputs, choices, button */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form__grid {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 48rem) {
+  .form__grid--two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.field--group {
+  gap: 1rem;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: hsl(187, 24%, 22%);
+}
+.field__label span[aria-hidden=true] {
+  color: hsl(169, 82%, 27%);
+}
+
+.field__input {
+  width: 100%;
+  border: 1px solid hsl(186, 15%, 59%);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 1.125rem;
+  color: hsl(187, 24%, 22%);
+  background-color: hsl(0, 0%, 100%);
+  transition: border-color 0.2s ease;
+}
+.field__input:focus-visible {
+  border-color: hsl(169, 82%, 27%);
+  outline: 3px solid rgba(12.393, 125.307, 104.6061, 0.4);
+  outline-offset: 2px;
+}
+.field__input[aria-invalid=true] {
+  border-color: hsl(0, 66%, 54%);
+}
+.field__input--textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+}
+
+.field__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: hsl(0, 66%, 54%);
+  line-height: 1.4;
+}
+
+.choice {
+  position: relative;
+}
+
+.choice__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.choice__label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid hsl(186, 15%, 59%);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background-color: hsl(0, 0%, 100%);
+  font-size: 1.125rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.choice__indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid hsl(186, 15%, 59%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+.choice__indicator--checkbox {
+  border-radius: 0.125rem;
+}
+
+.choice__input:focus-visible + .choice__label {
+  border-color: hsl(169, 82%, 27%);
+  outline: 3px solid rgba(12.393, 125.307, 104.6061, 0.4);
+  outline-offset: 2px;
+}
+
+.choice__input[type=radio]:checked + .choice__label {
+  border-color: hsl(169, 82%, 27%);
+  background-color: hsl(148, 38%, 91%);
+}
+.choice__input[type=radio]:checked + .choice__label .choice__indicator {
+  border-color: hsl(169, 82%, 27%);
+}
+.choice__input[type=radio]:checked + .choice__label .choice__indicator::after {
+  content: "";
+  display: block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background-color: hsl(169, 82%, 27%);
+}
+
+.choice__input[type=checkbox]:checked + .choice__label .choice__indicator--checkbox {
+  background-color: hsl(169, 82%, 27%);
+  border-color: hsl(169, 82%, 27%);
+}
+.choice__input[type=checkbox]:checked + .choice__label .choice__indicator--checkbox::after {
+  content: "";
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%23fff' d='M13.28 7.28a.748.748 0 0 1 0 0l-5.25 5.25a.748.748 0 0 1-1.06 0l-2.25-2.25a.75.75 0 1 1 1.06-1.06l1.72 1.72 4.72-4.72a.751.751 0 0 1 1.06 1.06Z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.button {
+  width: 100%;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 100%);
+  background-color: hsl(169, 82%, 27%);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.5rem;
+}
+.button:focus-visible {
+  outline: 3px solid rgba(12.393, 125.307, 104.6061, 0.4);
+  outline-offset: 2px;
+}
+
+/* =============================================================
+   8. INTERACTION STATES (HOVER)
+   =============================================================
+   WHAT: Hover styles wrapped in @media (hover: hover)
+   WHY:  This media query checks if the device supports hover.
+         Touch devices don't — so hover styles won't activate on tap,
+         preventing "sticky hover" bugs on mobile where styles persist
+         after tapping. Only mouse/trackpad users see hover effects. */
+@media (hover: hover) {
+  .field__input:hover {
+    border-color: hsl(169, 82%, 27%);
+  }
+  .choice__label:hover {
+    border-color: hsl(169, 82%, 27%);
+  }
+  .button:hover {
+    background-color: hsl(187, 24%, 22%);
+  }
+}
+/* =============================================================
+   9. SUCCESS TOAST
+   =============================================================
+   WHAT: Fixed notification bar at top of viewport
+   WHY:  position: fixed keeps it visible regardless of scroll position.
+         z-index: 1000 ensures it appears above all other content.
+         role="status" + aria-live="polite" (in HTML) makes screen readers
+         announce it when content appears. */
+.toast {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100% - 2rem, 28rem);
+  background-color: hsl(187, 24%, 22%);
+  color: hsl(0, 0%, 100%);
+  border-radius: 0.9375rem;
+  padding: 1.5rem;
+  z-index: 1000;
+  animation: toast-in 0.3s ease;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+.toast__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toast__header img {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.toast__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.toast__body {
+  margin: 0;
+  font-size: 0.875rem;
+  color: hsl(148, 38%, 91%);
+  line-height: 1.4;
+}
+
+/* =============================================================
+   10. ATTRIBUTION (from starter template)
+   ============================================================= */
+.attribution {
+  font-size: 0.6875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+.attribution a {
+  color: hsl(228, 45%, 44%);
+}

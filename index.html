@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 
+  WHAT: Set lang="en" on the root element
+  WHY:  Screen readers use this to select the correct pronunciation engine.
+        Without it, assistive tech may read the page in the wrong language.
+        This is a WCAG Level A requirement (3.1.1).
+-->
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- WHAT: Character encoding declaration
+       WHY:  Ensures special characters render correctly across all browsers -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- WHAT: Responsive viewport meta tag
+       WHY:  Makes the page scale properly on mobile devices.
+             Without this, mobile browsers render at desktop width and zoom out -->
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/images/favicon-32x32.png" />
+
+  <title>Frontend Mentor | Contact form</title>
+  <!-- WHAT: Descriptive page title
+       WHY:  Screen readers announce this when the page loads.
+             It's the first thing a user hears — must be meaningful (WCAG 2.4.2) -->
+
+  <!-- WHAT: Link to compiled SCSS stylesheet
+       WHY:  We author in SCSS for variables/nesting/mixins but browsers need plain CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- ============================================================
+       LIVE REGION — Screen Reader Announcer
+       ============================================================
+       WHAT: A visually hidden element with aria-live="polite"
+       WHY:  When we inject text into this element via JavaScript,
+             screen readers will announce it without stealing focus.
+             We use this for form-level error summaries on failed submit.
+             "polite" means it waits until the screen reader finishes
+             its current announcement before reading this.
+             "aria-atomic=true" means the entire content is re-read,
+             not just the changed part.
+  -->
+  <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ============================================================
+       SUCCESS TOAST
+       ============================================================
+       WHAT: A fixed-position notification shown after successful submission
+       WHY:  role="status" + aria-live="polite" ensures screen readers
+             announce the success message when it appears.
+             "hidden" attribute keeps it invisible and removed from the
+             accessibility tree until JavaScript reveals it.
+             We place it outside <main> so it's not part of the form flow.
+  -->
+  <div id="success-toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="toast__inner">
+      <!-- WHAT: Decorative checkmark icon
+           WHY:  aria-hidden="true" prevents screen readers from saying "image"
+                 since the text already conveys the meaning -->
+      <div class="toast__header">
+        <img src="./assets/images/icon-success-check.svg" alt="" aria-hidden="true" />
+        <p class="toast__title">Message Sent!</p>
+      </div>
+      <p class="toast__body">Thanks for completing the form. We'll be in touch soon!</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MAIN LANDMARK
+       ============================================================
+       WHAT: The <main> element defines the primary content area
+       WHY:  Screen reader users can jump directly to <main> using shortcuts.
+             There should be exactly ONE <main> per page (WCAG landmark requirement).
+  -->
+  <main class="page">
+    <!-- WHAT: Card container wrapped in a <section> with aria-labelledby
+         WHY:  aria-labelledby connects this section to the <h1>, so screen
+               readers announce "Contact Us section" when entering it.
+               This gives the region a programmatic accessible name. -->
+    <section class="card" aria-labelledby="contact-title">
+
+      <!-- WHAT: Single <h1> heading for the page
+           WHY:  Proper heading hierarchy helps screen reader users navigate.
+                 There should be one <h1> per page (WCAG 1.3.1, 2.4.6).
+                 The id connects it to the section's aria-labelledby. -->
+      <h1 id="contact-title">Contact Us</h1>
+
+      <!-- ============================================================
+           FORM
+           ============================================================
+           WHAT: A <form> element with novalidate attribute
+           WHY:  "novalidate" disables browser-native validation popups.
+                 We do this because:
+                 1. Native popups can't be styled to match the design
+                 2. We need custom error messages linked via aria-describedby
+                    so screen readers announce them properly
+                 3. We want consistent behavior across all browsers
+      -->
+      <form id="contact-form" class="form" novalidate>
+
+        <!-- ========================================================
+             FIRST NAME + LAST NAME — Two Column Grid
+             ========================================================
+             WHAT: A grid container that becomes 2 columns on desktop
+             WHY:  Matches the design (side-by-side on desktop, stacked on mobile) -->
+        <div class="form__grid form__grid--two">
+
+          <!-- FIRST NAME FIELD -->
+          <div class="field">
+            <!-- WHAT: <label> with explicit "for" matching the input's "id"
+                 WHY:  This is the #1 accessibility requirement for forms.
+                       The "for/id" connection means:
+                       1. Screen readers announce "First Name, required, text input"
+                       2. Clicking the label focuses the input (larger touch target)
+                       Without this, the input has NO accessible name. -->
+            <label for="first-name" class="field__label">
+              First Name
+              <span aria-hidden="true"> *</span>
+            </label>
+            <!-- WHAT: Text input with required + aria-required
+                 WHY:  "required" enables native validity checking in JS (input.validity.valueMissing).
+                       "aria-required=true" ensures screen readers announce "required"
+                       even though we use novalidate on the form.
+                       "autocomplete=given-name" helps browsers/password managers autofill. -->
+            <input id="first-name" name="firstName" type="text" class="field__input"
+              autocomplete="given-name" required aria-required="true" />
+
+            <!-- WHAT: Error message element, hidden by default
+                 WHY:  This <p> exists in the DOM from the start so we can
+                       link it via aria-describedby when validation fails.
+                       "hidden" removes it from both visual display AND the
+                       accessibility tree until we reveal it. -->
+            <p id="first-name-error" class="field__error" hidden></p>
+          </div>
+
+          <!-- LAST NAME FIELD -->
+          <div class="field">
+            <label for="last-name" class="field__label">
+              Last Name
+              <span aria-hidden="true"> *</span>
+            </label>
+            <input id="last-name" name="lastName" type="text" class="field__input"
+              autocomplete="family-name" required aria-required="true" />
+            <p id="last-name-error" class="field__error" hidden></p>
+          </div>
+        </div>
+
+        <!-- ========================================================
+             EMAIL FIELD — Full Width
+             ======================================================== -->
+        <div class="field">
+          <label for="email" class="field__label">
+            Email Address
+            <span aria-hidden="true"> *</span>
+          </label>
+
+          <!-- WHAT: type="email" with inputmode="email"
+               WHY:  type="email" gives us input.validity.typeMismatch for
+                     format checking in JS. inputmode="email" shows the
+                     email keyboard on mobile (with @ and . keys).
+                     autocomplete="email" helps autofill. -->
+          <input id="email" name="email" type="email" class="field__input" autocomplete="email"
+            inputmode="email" required aria-required="true" />
+          <p id="email-error" class="field__error" hidden></p>
+        </div>
+
+        <!-- ========================================================
+             QUERY TYPE — Radio Group in Fieldset
+             ========================================================
+             WHAT: <fieldset> wrapping related radio buttons with a <legend>
+             WHY:  This is THE correct way to group radio buttons for accessibility.
+                   Screen readers announce: "Query Type, group" when entering,
+                   then "General Enquiry, radio button, 1 of 2" for each option.
+                   Without fieldset/legend, screen readers can't associate the
+                   group label with the individual radio buttons.
+                   This is a WCAG 1.3.1 requirement for form groups.
+        -->
+        <fieldset class="field field--group">
+          <legend class="field__label">
+            Query Type
+            <span aria-hidden="true"> *</span>
+          </legend>
+
+          <div class="form__grid form__grid--two">
+            <!-- WHAT: Each radio is a real <input type="radio"> visually hidden,
+                       with a styled <label> next to it
+                 WHY:  Using REAL native radio inputs means:
+                       1. Keyboard navigation works automatically (Tab to group, Arrow keys between options)
+                       2. Screen readers announce the correct role ("radio button")
+                       3. The "name" attribute groups them (only one can be selected)
+                       4. We don't need complex ARIA roles/keyboard handlers
+                       Visually hiding the input (not display:none) keeps it focusable. -->
+            <div class="choice">
+              <input id="query-general" class="choice__input" type="radio" name="queryType"
+                value="general" required aria-required="true" />
+              <!-- WHAT: Label styled as a bordered card
+                   WHY:  The "for" attribute links to the radio input.
+                         CSS uses input:checked + label to style the selected state.
+                         The span.choice__indicator is a visual-only custom radio circle. -->
+              <label for="query-general" class="choice__label">
+                <span class="choice__indicator" aria-hidden="true"></span>
+                General Enquiry
+              </label>
+            </div>
+
+            <div class="choice">
+              <input id="query-support" class="choice__input" type="radio" name="queryType"
+                value="support" required aria-required="true" />
+              <label for="query-support" class="choice__label">
+                <span class="choice__indicator" aria-hidden="true"></span>
+                Support Request
+              </label>
+            </div>
+          </div>
+
+          <!-- WHAT: Radio group error, outside the grid but inside the fieldset
+               WHY:  Placed here so it appears below both radio options visually.
+                     When shown, we add aria-describedby to both radio inputs
+                     so screen readers announce the error for whichever one has focus. -->
+          <p id="query-type-error" class="field__error" hidden></p>
+        </fieldset>
+
+        <!-- ========================================================
+             MESSAGE — Textarea, Full Width
+             ======================================================== -->
+        <div class="field">
+          <label for="message" class="field__label">
+            Message
+            <span aria-hidden="true"> *</span>
+          </label>
+
+          <!-- WHAT: <textarea> with rows="6"
+               WHY:  Semantic element for multi-line text input.
+                     rows="6" sets the default visible height.
+                     Same aria attributes as text inputs for consistency. -->
+          <textarea id="message" name="message" class="field__input field__input--textarea" rows="6"
+            required aria-required="true"></textarea>
+          <p id="message-error" class="field__error" hidden></p>
+        </div>
+
+        <!-- ========================================================
+             CONSENT CHECKBOX
+             ========================================================
+             WHAT: Native checkbox, visually hidden, with a styled label
+             WHY:  Same technique as radios — keep the real input for
+                   keyboard (Space to toggle) and screen reader support.
+                   The label text IS the description, so no separate legend needed.
+        -->
+        <div class="field field--consent">
+          <div class="choice">
+            <input id="consent" class="choice__input" type="checkbox" name="consent" required
+              aria-required="true" />
+            <label for="consent" class="choice__label choice__label--checkbox">
+              <span class="choice__indicator choice__indicator--checkbox" aria-hidden="true"></span>
+              <!-- WHAT: Consent text with required asterisk
+                   WHY:  The entire label is clickable, giving a large touch target.
+                         Required asterisk is hidden from screen readers (they hear "required" from aria-required). -->
+              <span>
+                I consent to being contacted by the team
+                <span aria-hidden="true"> *</span>
+              </span>
+            </label>
+          </div>
+          <p id="consent-error" class="field__error" hidden></p>
+        </div>
+
+        <!-- ========================================================
+             SUBMIT BUTTON
+             ========================================================
+             WHAT: A <button type="submit">
+             WHY:  type="submit" triggers the form's submit event.
+                   Using a real <button> (not <div> or <a>) means:
+                   1. It's focusable by default
+                   2. It's activated by Enter AND Space
+                   3. Screen readers announce "Submit, button"
+                   4. No ARIA roles needed — it's semantic.
+        -->
+        <button type="submit" class="button">Submit</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- WHAT: Attribution footer (from the starter template)
+       WHY:  Credits for the challenge, outside <main> since it's supplementary -->
+  <footer class="attribution">
+    Challenge by <a href="https://www.frontendmentor.io?ref=challenge">Frontend Mentor</a>.
+    Coded by <a href="#">Your Name Here</a>.
+  </footer>
+
+  <!-- WHAT: JavaScript at the end of body
+       WHY:  Ensures the DOM is fully parsed before our script runs.
+             No need for DOMContentLoaded listener. -->
+  <script src="script.js"></script>
+</body>
+
+</html>
